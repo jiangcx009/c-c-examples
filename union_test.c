@@ -147,4 +147,5 @@ void main()
     printf("union char size:0x%x\n", get_union_bit_member1_size(union_bit_test));
     printf("union int_b2 size:0x%x\n", get_union_bit_member2_size(union_bit_test));
     printf("union long_c size:0x%x\n", get_union_bit_member5_size(union_bit_test));
+
 }
