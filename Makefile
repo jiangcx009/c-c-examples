@@ -18,6 +18,7 @@ OBJS += game
 OBJS += char2point
 OBJS += test-libevent-timer 
 OBJS += union_test
+OBJS += struct_test
 #OBJS += verify				
 #OBJS += test-r 				
 
@@ -82,6 +83,9 @@ game: game.cc
 	g++ $^ -o $@ $(LDFLAGS) -g
 
 union_test: union_test.c
+	cc $^ -o $@ $(LDFLAGS) -g
+
+struct_test: struct_test.c
 	cc $^ -o $@ $(LDFLAGS) -g
 
 clean:
