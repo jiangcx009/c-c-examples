@@ -19,6 +19,7 @@ OBJS += char2point
 OBJS += test-libevent-timer 
 OBJS += union_test
 OBJS += struct_test
+OBJS += OOP_test
 #OBJS += verify				
 #OBJS += test-r 				
 
@@ -88,6 +89,8 @@ union_test: union_test.c
 struct_test: struct_test.c
 	cc $^ -o $@ $(LDFLAGS) -g
 
+OOP_test: OOP_test.cc
+	g++ $^ -o $@ $(LDFLAGS) -g
 clean:
 	rm *.o 
 	rm $(OBJS)
