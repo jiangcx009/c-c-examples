@@ -98,7 +98,6 @@ UNSG32 SDR_BISR_Entry(const UNSG8 *argv[])
 		default: PRN_LOG(PRN_INFO, "Unknow Err!\n");
 		}
 
-		
 		Do_Repair(sdr_bisr);
 
 		// release SDR device
