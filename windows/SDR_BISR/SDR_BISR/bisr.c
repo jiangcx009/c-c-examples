@@ -533,12 +533,14 @@ UNSG32 SDR_PrePrepair(SDR_BISR_P bisr_info)
 	}
 #endif
 
+#if 0
 	stat = SDR_Sort(bisr_info->normalResource, NORMAL_SORT, bisr_info->normal_err_count);
 	if ( 0 == stat )
 	{
 		PRN_LOG(PRN_ERR, "sort return err!\n");
 		return PROC_ERR;
 	}
+#endif
 
 	stat = SDR_Redundancy(bisr_info);
 	if ( ERR_REPAIR_STAT == stat)
