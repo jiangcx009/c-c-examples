@@ -100,6 +100,8 @@ UNSG32 SDR_BISR_Entry(const UNSG8 *argv[])
 
 		Do_Repair(sdr_bisr);
 
+		
+		
 		// release SDR device
 		sdr_bisr = sdr_release(sdr_bisr);
 
