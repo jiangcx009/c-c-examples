@@ -4,6 +4,12 @@
 #include <string.h>
 #include <math.h>
 #include <windows.h>
+#include "usbjtag.h"
+#include "libfpga.h"
+#include "lusb0_usb.h"
+
+extern FILE *fp_dumper;
+
 
 void colRepair(int** colFuse, int colRed[24][4]){
 
@@ -118,11 +124,11 @@ UNSG32 fill_normal_err(ERR_RESOURCE_INFO_t *nlR, UNSG32 rowaddr, UNSG32 coladdr)
 	nlR->sMAT	= sMat;
 
 #ifdef SDR_DBG
-	PRN_LOG(PRN_DBG, "/**********ERROR INFO*************/\n");
-	PRN_LOG(PRN_DBG, "\t rowaddr: %d, 0x%x\n", rowaddr, rowaddr);
-	PRN_LOG(PRN_DBG, "\t coladdr: %d, 0x%x\n", coladdr, coladdr);
-	PRN_LOG(PRN_DBG, "\t bMat   : %d, 0x%x\n", bMat, bMat);
-	PRN_LOG(PRN_DBG, "\t sMat   : %d, 0x%x\n", sMat, sMat);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t/**********ERROR INFO*************/\n");
+	PRN_LOG(fp_dumper, PRN_DBG, "\t rowaddr: %d, 0x%x\n", rowaddr, rowaddr);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t coladdr: %d, 0x%x\n", coladdr, coladdr);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t bMat   : %d, 0x%x\n", bMat, bMat);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t sMat   : %d, 0x%x\n", sMat, sMat);
 #endif
 
 }
@@ -138,7 +144,7 @@ UNSG32 fill_WL_redundancy_err(ERR_RESOURCE_INFO_t *wlR, UNSG32 rowaddr, UNSG32 c
 
 	if ( rowaddr < 0 || rowaddr > 0x7F)
 	{
-		PRN_LOG(PRN_ERR, "WordLine Redundancy addr is error!\n");
+		PRN_LOG(fp_dumper, PRN_ERR, "WordLine Redundancy addr is error!\n");
 		return ERR_PROC_STAT;
 	}
 
@@ -151,7 +157,7 @@ UNSG32 fill_WL_redundancy_err(ERR_RESOURCE_INFO_t *wlR, UNSG32 rowaddr, UNSG32 c
 	//fill the buffer
 	if ( wlR[index].rowAdr == index)
 	{
-		PRN_LOG(PRN_INFO, "Have fill the buffer!\n");
+		PRN_LOG(fp_dumper, PRN_DBG, "Have fill the buffer!\n");
 		return CTX_PROC_STAT;
 	}
 
@@ -161,11 +167,11 @@ UNSG32 fill_WL_redundancy_err(ERR_RESOURCE_INFO_t *wlR, UNSG32 rowaddr, UNSG32 c
 	wlR[index].bMAT   = rowaddr/8;
 
 #ifdef SDR_DBG
-	PRN_LOG(PRN_DBG, "/**********ERROR INFO*************/\n");
-	PRN_LOG(PRN_DBG, "\t rowaddr: %d, 0x%x\n", rowaddr, rowaddr);
-	PRN_LOG(PRN_DBG, "\t coladdr: %d, 0x%x\n", coladdr, coladdr);
-	PRN_LOG(PRN_DBG, "\t bMat   : %d, 0x%x\n", rowaddr/8, rowaddr/8);
-	PRN_LOG(PRN_DBG, "\t sMat   : %d, 0x%x\n", 0, 0);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t/**********ERROR INFO*************/\n");
+	PRN_LOG(fp_dumper, PRN_DBG, "\t rowaddr: %d, 0x%x\n", rowaddr, rowaddr);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t coladdr: %d, 0x%x\n", coladdr, coladdr);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t bMat   : %d, 0x%x\n", rowaddr/8, rowaddr/8);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t sMat   : %d, 0x%x\n", 0, 0);
 #endif
 
 	return CTX_PROC_STAT;
@@ -188,7 +194,7 @@ UNSG32 fill_BL_redundancy_err(ERR_RESOURCE_INFO_t *blR, UNSG32 rowaddr, UNSG32 c
 
 	if ( coladdr < 0 || coladdr > 0x3)
 	{
-		PRN_LOG(PRN_ERR, "BitLine Redundancy is error!\n");
+		PRN_LOG(fp_dumper, PRN_ERR, "BitLine Redundancy is error!\n");
 		return ERR_PROC_STAT;
 	}
 	col_index  = coladdr;
@@ -206,11 +212,11 @@ UNSG32 fill_BL_redundancy_err(ERR_RESOURCE_INFO_t *blR, UNSG32 rowaddr, UNSG32 c
 	blR[index].sMAT   = sMat;
 
 #ifdef SDR_DBG
-	PRN_LOG(PRN_DBG, "/**********ERROR INFO*************/\n");
-	PRN_LOG(PRN_DBG, "\t rowaddr: %d, 0x%x\n", rowaddr, rowaddr);
-	PRN_LOG(PRN_DBG, "\t coladdr: %d, 0x%x\n", coladdr, coladdr);
-	PRN_LOG(PRN_DBG, "\t bMat   : %d, 0x%x\n", bMat, bMat);
-	PRN_LOG(PRN_DBG, "\t sMat   : %d, 0x%x\n", sMat, sMat);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t/**********ERROR INFO*************/\n");
+	PRN_LOG(fp_dumper, PRN_DBG, "\t rowaddr: %d, 0x%x\n", rowaddr, rowaddr);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t coladdr: %d, 0x%x\n", coladdr, coladdr);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t bMat   : %d, 0x%x\n", bMat, bMat);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t sMat   : %d, 0x%x\n", sMat, sMat);
 #endif
 
 	return CTX_PROC_STAT;
@@ -231,7 +237,7 @@ UNSG32 fill_CROSS_redundancy_err(SDR_BISR_t *sdr_info, UNSG32 rowaddr, UNSG32 co
 	//index = coladdr * 8 + bMat;
 
 	//fill the BL Redundancy buffer
-	index = col_index * 24 + sMat;
+	index = coladdr * 24 + sMat;
 
 	sdr_info->bitLineResource[index].colAdr = coladdr;
 	sdr_info->bitLineResource[index].rowAdr = rowaddr;
@@ -252,11 +258,11 @@ UNSG32 fill_CROSS_redundancy_err(SDR_BISR_t *sdr_info, UNSG32 rowaddr, UNSG32 co
 	
 
 #ifdef SDR_DBG
-	PRN_LOG(PRN_DBG, "/**********ERROR INFO*************/\n");
-	PRN_LOG(PRN_DBG, "\t rowaddr: %d, 0x%x\n", rowaddr, rowaddr);
-	PRN_LOG(PRN_DBG, "\t coladdr: %d, 0x%x\n", coladdr, coladdr);
-	PRN_LOG(PRN_DBG, "\t bMat   : %d, 0x%x\n", bMat, bMat);
-	PRN_LOG(PRN_DBG, "\t sMat   : %d, 0x%x\n", sMat, sMat);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t/**********ERROR INFO*************/\n");
+	PRN_LOG(fp_dumper, PRN_DBG, "\t rowaddr: %d, 0x%x\n", rowaddr, rowaddr);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t coladdr: %d, 0x%x\n", coladdr, coladdr);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t bMat   : %d, 0x%x\n", bMat, bMat);
+	PRN_LOG(fp_dumper, PRN_DBG, "\t sMat   : %d, 0x%x\n", sMat, sMat);
 #endif
 
 	return CTX_PROC_STAT;
@@ -267,6 +273,18 @@ UNSG32 fill_bisr_info(UNSG32 buffer, SDR_BISR_t *bisr_info)
 	UNSG32	valid_err_dat = buffer && ((1<<21) - 1);
 	UNSG32	rowaddr, coladdr;
 	UNSG32  stat;
+
+#ifdef CORNER_CASE
+	static UNSG32  first_time = 1;
+
+	if ( !first_time) 
+		return CTX_PROC_STAT;
+
+	if (first_time) {
+		first_time = 0;
+		buffer = 0x8FF << 7;
+	}
+#endif
 	
 	/*************************Description************************
 	 * rowaddr take up 14bits and indicate the count of WL
@@ -275,11 +293,25 @@ UNSG32 fill_bisr_info(UNSG32 buffer, SDR_BISR_t *bisr_info)
 	rowaddr = (buffer >> 7) & ((1 << 14) - 1);
 	coladdr = buffer & ((1 << 7) - 1);
 
+	if ( buffer == 0x00FFFFFF || buffer > 0x1FFFFF)
+		return CTX_PROC_STAT;
+
 	if ( rowaddr < 0 || rowaddr > 0x3FFF || coladdr < 0 || coladdr > 0x7F)
 	{
-		PRN_LOG(PRN_ERR, "======= The address is out of range! =======\n");
+		PRN_LOG(fp_dumper, PRN_ERR, "======= The address is out of range! =======\n");
 		return ERR_PROC_STAT;
 	}
+
+
+	switch(bisr_info->type) {
+	case 1: PRN_LOG(fp_dumper, PRN_DBG, "\t>>>>>>>>> It is Normal Error! >>>>>>>>>\n"); break;
+	case 2: PRN_LOG(fp_dumper, PRN_INFO, "\t>>>>>>>>> It is WORD Line Error! >>>>>>>>>\n"); break;
+	case 3: PRN_LOG(fp_dumper, PRN_INFO, "\t>>>>>>>>> It is BIT Line Error! >>>>>>>>>\n"); break; 
+	case 4: PRN_LOG(fp_dumper, PRN_INFO, "\t>>>>>>>>> It is Cross Error! >>>>>>>>>\n"); 
+	}
+
+	if ( bisr_info->type > 1)
+		PRN_LOG(fp_dumper, PRN_INFO, "\t======= get SDRAM Err info : %x =======\n", buffer);
 
 	if ( NORMAL_ERR == bisr_info->type ) 
 	{
@@ -305,6 +337,230 @@ UNSG32 fill_bisr_info(UNSG32 buffer, SDR_BISR_t *bisr_info)
 	return CTX_PROC_STAT;
 }
 
+UNSG32 BLRed_used_chk(SDR_BISR_t *bisr_info, UNSG32 rowaddr)
+{
+	ERR_RESOURCE_INFO_p		wlR = bisr_info->wordLineResource;
+	UNSG32					wlR_num;
+	UNSG32					wlR_reg, wlR_dat;
+	UNSG32					addrC, data, addrD;
+
+	addrC = SDRC_REGADD + ((bisr_info->SDRID - 1) / 2) * SDRC_REGOFFSET + 0x64;
+	wlR_num = rowaddr; //0~127
+	wlR_reg = 0x10F + wlR_num/8*0x10;
+	wlR_dat = 0x700 | (1 << wlR_num);
+
+	PRN_LOG(fp_dumper, PRN_DBG, "Word Line Redundancy num:%d, reg:%x, dat:%x\n", wlR_num ,wlR_reg, wlR_dat);
+
+	//test mode entry
+	addrD = (FUSE_REGADD + 0xe) << 16;
+	data = addrD | 0x30;
+	WRITESDR(addrC, data | (1 << 31));
+
+	//access the BL hit readout address
+	addrD = (FUSE_REGADD + 0x1) << 16;
+	data = addrD | wlR_reg;
+	WRITESDR(addrC, data | (1 << 31));
+
+	//
+	addrD = (FUSE_REGADD + 0x2) << 16;
+	data = addrD | wlR_dat;
+	WRITESDR(addrC, data | (1 << 31));
+
+	addrD = (FUSE_REGADD + 0xe) << 16;
+	data = addrD;
+	WRITESDR(addrC, data | (0 << 31));
+
+	data = READSDR(addrC+8);
+	wlR[rowaddr].last_used = !((data & (1 << 12)) >> 12);
+	//printf("data:%x, used:%d\n", data, wlR[rowaddr].last_used);
+
+	//exit test mode
+	addrD = (FUSE_REGADD + 0xe) << 16;
+	data = addrD | 0x0;
+	WRITESDR(addrC, data | (1 << 31));	
+
+	return wlR[rowaddr].used;
+}
+
+UNSG32 WLRed_used_chk(SDR_BISR_t *bisr_info, UNSG32 rowaddr)
+{
+	ERR_RESOURCE_INFO_p		wlR = bisr_info->wordLineResource;
+	UNSG32					wlR_num;
+	UNSG32					wlR_reg, wlR_dat;
+	UNSG32					addrC, data, addrD;
+
+	addrC = SDRC_REGADD + ((bisr_info->SDRID - 1) / 2) * SDRC_REGOFFSET + 0x64;
+	wlR_num = rowaddr; //0~127
+	wlR_reg = 0x10F + wlR_num/8*0x10;
+	wlR_dat = 0x700 | (1 << wlR_num);
+
+	PRN_LOG(fp_dumper, PRN_DBG, "Word Line Redundancy num:%d, reg:%x, dat:%x\n", wlR_num ,wlR_reg, wlR_dat);
+
+	//test mode entry
+	addrD = (FUSE_REGADD + 0xe) << 16;
+	data = addrD | 0x30;
+	WRITESDR(addrC, data | (1 << 31));
+
+	//access the BL hit readout address
+	addrD = (FUSE_REGADD + 0x1) << 16;
+	data = addrD | wlR_reg;
+	WRITESDR(addrC, data | (1 << 31));
+
+	//
+	addrD = (FUSE_REGADD + 0x2) << 16;
+	data = addrD | wlR_dat;
+	WRITESDR(addrC, data | (1 << 31));
+
+	addrD = (FUSE_REGADD + 0xe) << 16;
+	data = addrD;
+	WRITESDR(addrC, data | (0 << 31));
+
+	data = READSDR(addrC+8);
+	wlR[rowaddr].last_used = !((data & (1 << 12)) >> 12);
+	//printf("data:%x, used:%d\n", data, wlR[rowaddr].last_used);
+
+	//exit test mode
+	addrD = (FUSE_REGADD + 0xe) << 16;
+	data = addrD | 0x0;
+	WRITESDR(addrC, data | (1 << 31));	
+
+	return wlR[rowaddr].used;
+}
+
+/*********************************************************************
+ * @Description:
+ *		addr: the normal error address from BIST
+ *		sdr_id: the Dram chip id
+ *		rp_coladdr: the col addr of BL Red which repair the normal error
+ *********************************************************************/
+UNSG32 BL_Repair_check(UNSG32 addr, UNSG32 sdr_id, UNSG32 rp_coladdr)
+{
+	UNSG32 wdata = addr;
+	UNSG32 rdata;
+	UNSG32 addrR;
+	UNSG32 addrD, data, addrC;
+	UNSG32 addrAct;
+
+	addrAct = addr + 0x200000 * ((sdr_id - 1)/2);
+	WRITESDR(addrAct<<4, wdata);
+
+	//Active BL Redundancy access
+	addrC = SDRC_REGADD + ((sdr_id - 1) / 2) * SDRC_REGOFFSET + 0x64;
+	PRN_LOG(fp_dumper, PRN_DBG, "\t SDRAM Controller addr:%x\n", addrC);
+	addrD = 0x15;
+	data = 0x718;
+	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+
+	WRITESDR(addrC, data | (addrD << 16) | (0 << 31));
+	rdata = READSDR(addrC + 0x8);
+	rdata = READSDR(addrC + 0x8);
+	rdata = READSDR(addrC + 0x8);
+
+	Sleep(10);
+		
+	addrR = (addrAct & 0xFFFFFF80) | (rp_coladdr & 0x3); 
+	PRN_LOG(fp_dumper, PRN_INFO, "\t calc redundancy map addr:%x\n", addrR);
+	rdata = READSDR(addrR<<4);
+	rdata = READSDR(addrR<<4);
+	PRN_LOG(fp_dumper, PRN_INFO, "\t read data:%x, write data:%x\n", rdata, wdata);	
+
+	//Exit
+	addrD = 0x15;
+	data = 0x658;
+	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+
+	if (rdata == wdata)
+		return 1;
+	else return 0;
+}
+
+UNSG32 WL_Repair_check(UNSG32 addr, UNSG32 sdr_id, UNSG32 rp_rowaddr)
+{
+	UNSG32 wdata = addr;
+	UNSG32 rdata;
+	UNSG32 addrR;
+	UNSG32 addrD, data, addrC;
+	UNSG32 rowH, rowL;
+
+	UNSG32 addrAct;
+	
+	addrAct = addr + 0x200000 * ((sdr_id - 1)/2);
+	WRITESDR(addrAct<<4, wdata);
+
+	//Active BL Redundancy access
+	addrC = SDRC_REGADD + ((sdr_id - 1) / 2) * SDRC_REGOFFSET + 0x64;
+	PRN_LOG(fp_dumper, PRN_DBG, "\tSDRAM Controller addr:%x\n", addrC);
+	addrD = 0x15;
+	data = 0x698;
+	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+
+	WRITESDR(addrC, data | (addrD << 16) | (0 << 31));
+	rdata = READSDR(addrC + 0x8);
+
+	Sleep(10);
+
+	//normal error row addr high 3bits and low 4bits
+	rowL = rp_rowaddr & 0xF;
+	rowH = rp_rowaddr >> 4;
+	addrR = (addrAct & 0x7F) | (((rowH << 11) | rowL) << 7);
+	PRN_LOG(fp_dumper, PRN_INFO, "\tread Red addr:%x\n", addrR);
+	rdata = READSDR(addrR<<4);
+	PRN_LOG(fp_dumper, PRN_INFO, "\tread data:%x, write data:%x\n", rdata, wdata);
+
+	//Exit
+	addrD = 0x15;
+	data = 0x658;
+	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+
+	if (rdata == wdata)
+		return 1;
+	else return 0;
+}
+
+UNSG32 CL_Repair_check(UNSG32 addr, UNSG32 sdr_id, UNSG32 rp_rowaddr)
+{
+	UNSG32 wdata = addr;
+	UNSG32 rdata;
+	UNSG32 addrR;
+	UNSG32 addrD, data, addrC;
+	UNSG32 rowH, rowL;
+
+	UNSG32 addrAct;
+
+	addrAct = addr + 0x200000 * ((sdr_id - 1)/2);
+	WRITESDR(addrAct<<4, wdata);
+
+	//Active BL Redundancy access
+	addrC = SDRC_REGADD + ((sdr_id - 1) / 2) * SDRC_REGOFFSET + 0x64;
+	PRN_LOG(fp_dumper, PRN_DBG, "\tSDRAM Controller addr:%x\n", addrC);
+	addrD = 0x15;
+	data = 0x698;
+	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+
+	WRITESDR(addrC, data | (addrD << 16) | (0 << 31));
+	rdata = READSDR(addrC + 0x8);
+
+	Sleep(10);
+
+	//normal error row addr high 3bits and low 4bits
+	rowL = rp_rowaddr & 0xF;
+	rowH = rp_rowaddr >> 4;
+	addrR = (addrAct & 0x7F) | (((rowH << 11) | rowL) << 7);
+	PRN_LOG(fp_dumper, PRN_INFO, "\tread Red addr:%x\n", addrR);
+	rdata = READSDR(addrR<<4);
+	PRN_LOG(fp_dumper, PRN_INFO, "\tread data:%x, write data:%x\n", rdata, wdata);
+
+	//Exit
+	addrD = 0x15;
+	data = 0x658;
+	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+
+	if (rdata == wdata)
+		return 1;
+	else return 0;
+}
+
+
 UNSG32 BitLine_Repair(SDR_BISR_t *bisr_info)
 {
 	//static UNSG8 sMAT_stat[4*24] = {0};  //store the Redundancy status 
@@ -314,12 +570,15 @@ UNSG32 BitLine_Repair(SDR_BISR_t *bisr_info)
 	UNSG32	sMat_addr;
 	UNSG32  index;
 	UNSG32  stat;
+	UNSG32  blR_used = 0;
 	UNSG32  coladdr_sdr, rowaddr_sdr, smataddr_sdr;
 
 	sMat_addr = nlR->sMAT;
 	index     = sMat_addr; 
 
-	PRN_LOG(PRN_INFO, "\n/************Repair with BitLine**************/\n");
+	PRN_LOG(fp_dumper, PRN_INFO, "\n/*********************** Repair with BitLine ***********************/ \n");
+	PRN_LOG(fp_dumper, PRN_INFO, ">>>>>> SDRAM ChipID: %x %x >>>>>>\n", bisr_info->SDRID - 1, bisr_info->SDRID);
+	PRN_LOG(fp_dumper, PRN_INFO, ">>>>>> It is Normal Error: 0x%x >>>>>>\n", nlR->colAdr | (nlR->rowAdr << 7));
 
 	/***********************************************************************************************************
 	 * Description:
@@ -335,9 +594,12 @@ UNSG32 BitLine_Repair(SDR_BISR_t *bisr_info)
 	 **********************************************************************************************************/
 	for ( i = 0; i < 4; i++) //loop of Redundancy in a small Mat
 	{
+#ifdef WLR_ONLY
+		blR[index].err = 1;
+#endif
 		if ( blR[index].err)
 		{
-			PRN_LOG(PRN_INFO, "======  This BL Redundancy @%d of sMat @%d is Err!\n", i, sMat_addr);
+			PRN_LOG(fp_dumper, PRN_INFO, "======  This BL Redundancy @%d of sMat @%d is Err!\n", i, sMat_addr);
 			index = index + 24;
 			stat = BL_ERR_STAT;
 		}
@@ -347,33 +609,34 @@ UNSG32 BitLine_Repair(SDR_BISR_t *bisr_info)
 			coladdr_sdr = blR[index].redundancy_resource.coladdr;
 			rowaddr_sdr = blR[index].redundancy_resource.rowaddr;
 			smataddr_sdr = blR[index].redundancy_resource.sMataddr;
+			blR_used = 1;
 
 			if ( coladdr_sdr == nlR->colAdr && smataddr_sdr == nlR->sMAT)
 			{
-				PRN_LOG(PRN_INFO, "======  This BL Redundancy has repaired the col @%d of this sMat @%d!\n", coladdr_sdr, smataddr_sdr);
-				PRN_LOG(PRN_DBG, "/**************Repair Info*****************/\n");
-				PRN_LOG(PRN_DBG, "===== err rowaddr: %d, 0x%x\n", nlR->rowAdr, nlR->rowAdr);
-				PRN_LOG(PRN_DBG, "===== err coladdr: %d, 0x%x\n", nlR->colAdr, nlR->colAdr);
-				PRN_LOG(PRN_DBG, "===== err sMat   : %d, 0x%x\n", nlR->sMAT, nlR->sMAT);
-				PRN_LOG(PRN_DBG, "===== redundancy: BitLine sMat :%d, %d th BL\n", nlR->sMAT, i);
+				PRN_LOG(fp_dumper, PRN_INFO, "======  This BL Redundancy has repaired the col @%d of this sMat @%d!\n", coladdr_sdr, smataddr_sdr);
+				PRN_LOG(fp_dumper, PRN_DBG, "/**************Repair Info*****************/\n");
+				PRN_LOG(fp_dumper, PRN_DBG, "===== err rowaddr: %d, 0x%x\n", nlR->rowAdr, nlR->rowAdr);
+				PRN_LOG(fp_dumper, PRN_DBG, "===== err coladdr: %d, 0x%x\n", nlR->colAdr, nlR->colAdr);
+				PRN_LOG(fp_dumper, PRN_DBG, "===== err sMat   : %d, 0x%x\n", nlR->sMAT, nlR->sMAT);
+				PRN_LOG(fp_dumper, PRN_DBG, "===== redundancy: BitLine sMat :%d, %d th BL\n", nlR->sMAT, i);
 				stat = BL_FINISH_STAT; 
 				break;
 			}
 			else 
 			{
-				PRN_LOG(PRN_INFO, "======  This BL Redundancy @%d of sMat @%d is used!\n", i, sMat_addr);
+				PRN_LOG(fp_dumper, PRN_INFO, "======  This BL Redundancy @%d of sMat @%d is used!\n", i, sMat_addr);
 				index = index + 24;
 				stat = BL_ERR_STAT;
 			}
 		}
 		else
 		{
-			PRN_LOG(PRN_DBG, "======  This BL Redundancy @%d of sMat @%d is OK!\n", i, sMat_addr);
-			PRN_LOG(PRN_DBG, "/**************Repair Info*****************/\n");
-			PRN_LOG(PRN_DBG, "===== err rowaddr: %d, 0x%x\n", nlR->rowAdr, nlR->rowAdr);
-			PRN_LOG(PRN_DBG, "===== err coladdr: %d, 0x%x\n", nlR->colAdr, nlR->colAdr);
-			PRN_LOG(PRN_DBG, "===== err sMat   : %d, 0x%x\n", nlR->sMAT, nlR->sMAT);
-			PRN_LOG(PRN_DBG, "===== redundancy: BitLine sMat :%d, %d th BL\n", nlR->sMAT, i);
+			PRN_LOG(fp_dumper, PRN_INFO, "======  This BL Redundancy @%d of sMat @%d is OK!\n", i, sMat_addr);
+			PRN_LOG(fp_dumper, PRN_INFO, "/**************Repair Info*****************/\n");
+			PRN_LOG(fp_dumper, PRN_INFO, "===== err rowaddr: %d, 0x%x\n", nlR->rowAdr, nlR->rowAdr);
+			PRN_LOG(fp_dumper, PRN_INFO, "===== err coladdr: %d, 0x%x\n", nlR->colAdr, nlR->colAdr);
+			PRN_LOG(fp_dumper, PRN_INFO, "===== err sMat   : %d, 0x%x\n", nlR->sMAT, nlR->sMAT);
+			PRN_LOG(fp_dumper, PRN_INFO, "===== redundancy: BitLine sMat :%d, %d th BL\n", nlR->sMAT, i);
 
 			blR[index].redundancy_resource.coladdr = nlR->colAdr;
 			blR[index].redundancy_resource.rowaddr = nlR->rowAdr;
@@ -385,6 +648,7 @@ UNSG32 BitLine_Repair(SDR_BISR_t *bisr_info)
 			break;
 		}
 	}
+
 	return stat;	
 }
 
@@ -404,7 +668,9 @@ UNSG32 WordLine_Repair(SDR_BISR_t *bisr_info)
 	index     = bMat_addr + 1; 
 	index     = (index == 8) ? 0 : index;
 
-	PRN_LOG(PRN_INFO, "\n/************Repair with WordLine**************/\n");
+	PRN_LOG(fp_dumper, PRN_INFO, "\n/*********************** Repair with WordLine ***********************/ \n");
+	PRN_LOG(fp_dumper, PRN_INFO, ">>>>>> SDRAM ChipID: %x %x >>>>>>\n", bisr_info->SDRID - 1, bisr_info->SDRID);
+	PRN_LOG(fp_dumper, PRN_INFO, ">>>>>> It is Normal Error: 0x%x >>>>>>\n", nlR->colAdr | (nlR->rowAdr << 7));
 
 	/***********************************************************************************************************
 	 * Description： 只有BL Redundancy修补不了，才需要用WL Redundancy修补
@@ -426,9 +692,17 @@ UNSG32 WordLine_Repair(SDR_BISR_t *bisr_info)
 		for ( j = 0; j < 16; j++)
 		{
 			index_wl_redundancy = index * 16 + j;
+#ifdef ReRepair
+			//WLRed_used_chk(bisr_info, index_wl_redundancy);
+#endif
 			if ( wlR[index_wl_redundancy].err)
 			{
-				PRN_LOG(PRN_ERR, "======  This WL Redundancy @%d is Err!\n", index_wl_redundancy);
+				PRN_LOG(fp_dumper, PRN_ERR, "======  This WL Redundancy @%d is Err!\n", index_wl_redundancy);
+				stat = ERR_REPAIR_STAT;
+			}
+			else if ( wlR[index_wl_redundancy].last_used)
+			{
+				PRN_LOG(fp_dumper, PRN_INFO, "======  This WL Redundancy @%d is last used!\n", index_wl_redundancy);
 				stat = ERR_REPAIR_STAT;
 			}
 			else if ( wlR[index_wl_redundancy].used)
@@ -440,28 +714,28 @@ UNSG32 WordLine_Repair(SDR_BISR_t *bisr_info)
 				if ( rowaddr_sdr == nlR->rowAdr)
 				{
 					stat = WL_FINISH_STAT; 
-					PRN_LOG(PRN_DBG, "======  This WL Redundancy has repaired the WL @%d!\n", rowaddr_sdr);
-					PRN_LOG(PRN_DBG, "/**************Repair Info*****************/\n");
-					PRN_LOG(PRN_DBG, "===== err rowaddr: %d, 0x%x\n", nlR->rowAdr, nlR->rowAdr);
-					PRN_LOG(PRN_DBG, "===== err coladdr: %d, 0x%x\n", nlR->colAdr, nlR->colAdr);
-					PRN_LOG(PRN_DBG, "===== err bMat   : %d, 0x%x\n", nlR->bMAT, nlR->bMAT);
-					PRN_LOG(PRN_DBG, "===== redundancy: WordLine bMat :%d, %d th WL\n", i, j);
+					PRN_LOG(fp_dumper, PRN_INFO, "======  This WL Redundancy has repaired the WL @%d!\n", rowaddr_sdr);
+					PRN_LOG(fp_dumper, PRN_INFO, "/**************Repair Info*****************/\n");
+					PRN_LOG(fp_dumper, PRN_INFO, "===== err rowaddr: %d, 0x%x\n", nlR->rowAdr, nlR->rowAdr);
+					PRN_LOG(fp_dumper, PRN_INFO, "===== err coladdr: %d, 0x%x\n", nlR->colAdr, nlR->colAdr);
+					PRN_LOG(fp_dumper, PRN_INFO, "===== err bMat   : %d, 0x%x\n", nlR->bMAT, nlR->bMAT);
+					PRN_LOG(fp_dumper, PRN_INFO, "===== redundancy: WordLine bMat :%d, %d th WL\n", i, j);
 					break;
 				}
 				else 
 				{
-					PRN_LOG(PRN_INFO, "======  This WL Redundancy @%d is used!\n", index_wl_redundancy);
+					PRN_LOG(fp_dumper, PRN_INFO, "======  This WL Redundancy @%d is used!\n", index_wl_redundancy);
 					stat = ERR_REPAIR_STAT;
 				}
 			}
 			else
 			{
-				PRN_LOG(PRN_DBG, "======  This WL Redundancy @%d is OK!\n", index_wl_redundancy);
-				PRN_LOG(PRN_DBG, "/**************Repair Info*****************/\n");
-				PRN_LOG(PRN_DBG, "===== err rowaddr: %d, 0x%x\n", nlR->rowAdr, nlR->rowAdr);
-				PRN_LOG(PRN_DBG, "===== err coladdr: %d, 0x%x\n", nlR->colAdr, nlR->colAdr);
-				PRN_LOG(PRN_DBG, "===== err bMat   : %d, 0x%x\n", nlR->bMAT, nlR->bMAT);
-				PRN_LOG(PRN_DBG, "===== redundancy: WordLine bMat :%d, %d th WL\n", i, j);
+				PRN_LOG(fp_dumper, PRN_INFO, "======  This WL Redundancy @%d is OK!\n", index_wl_redundancy);
+				PRN_LOG(fp_dumper, PRN_INFO, "/**************Repair Info*****************/\n");
+				PRN_LOG(fp_dumper, PRN_INFO, "===== err rowaddr: %d, 0x%x\n", nlR->rowAdr, nlR->rowAdr);
+				PRN_LOG(fp_dumper, PRN_INFO, "===== err coladdr: %d, 0x%x\n", nlR->colAdr, nlR->colAdr);
+				PRN_LOG(fp_dumper, PRN_INFO, "===== err bMat   : %d, 0x%x\n", nlR->bMAT, nlR->bMAT);
+				PRN_LOG(fp_dumper, PRN_INFO, "===== redundancy: WordLine bMat :%d, %d th WL\n", i, j);
 
 				wlR[index_wl_redundancy].redundancy_resource.coladdr = nlR->colAdr;
 				wlR[index_wl_redundancy].redundancy_resource.rowaddr = nlR->rowAdr;
@@ -476,6 +750,11 @@ UNSG32 WordLine_Repair(SDR_BISR_t *bisr_info)
 	}
 		
 	return stat;	
+}
+
+UNSG32 CrossLine_Repair(SDR_BISR_t *bisr_info)
+{
+
 }
 
 /*************************Description*********************************************
@@ -502,7 +781,7 @@ UNSG32 SDR_Redundancy(SDR_BISR_t *bisr_info)
 	do {
 		if ( err_cnt == bisr_info->normal_err_count)
 		{
-			PRN_LOG(PRN_INFO, "\n/*********************Repair Finish and Successfully!***********************/\n");
+			PRN_LOG(fp_dumper, PRN_DBG, "\n/*********************Repair Finish and Successfully!***********************/\n");
 			repair_stat = FINISH_REPAIR_STAT;
 		}
 
@@ -537,51 +816,92 @@ UNSG32 SDR_Redundancy(SDR_BISR_t *bisr_info)
 	}while(1);
 }
 
-void PrepareSDR(UNSG32 addr)
+void PrepareSDR(UNSG32 addr_c)
 {
 	UNSG32	data,  dat_H;
+	UNSG32  i;
+	UNSG32  addr = SDRC_REGADD + 0x64;
 
-	dat_H = (FUSE_REGADD + 0x0E) << 16;
-	data = 0x27 | dat_H;
-	WRITESDR(addr, data | (1 << 31));
+	for(i = 0; i < 3; i++)
+	{
+		dat_H = (FUSE_REGADD + 0x0E) << 16;
+		data = 0x27 | dat_H;
+		WRITESDR(addr, data | (1 << 31));
 
-	dat_H = (FUSE_REGADD + 0x03) << 16;
-	data = 0x26 | dat_H;
-	WRITESDR(addr, data | (1 << 31));
+#ifdef FT_TEST
+		//revised by Sheldon, do not need to open pump in CP (still needed in FT)
+		dat_H = (FUSE_REGADD + 0x03) << 16;
+		data = 0x26 | dat_H;
+		WRITESDR(addr, data | (1 << 31));
+#endif
+		Sleep(10); //wait 10ms
 
-	Sleep(10); //wait 10ms
+		dat_H = (FUSE_REGADD + 0x02) << 16;
+		data = 0x700 | dat_H;
+		//data = 0x500 | dat_H;
+		WRITESDR(addr, data | (1 << 31));
 
-	dat_H = (FUSE_REGADD + 0x02) << 16;
-	data = 0x700 | dat_H;
-	WRITESDR(addr, data | (1 << 31));
-
-	Sleep(1);
+		Sleep(10);
+		addr = addr + SDRC_REGOFFSET;
+	}
+	
 }
 
-void ExitSDR(UNSG32 addr)
+void ExitSDR(UNSG32 addr_c)
 {
-	UNSG32	data,  dat_H;
+	UNSG32	data,  dat_H, i;
+	UNSG32  addr = SDRC_REGADD + 0x64;
 
-	addr = SDRC_REGADD + 0x64;
+	for(i = 0; i < 3; i++)
+	{
+		dat_H = (FUSE_REGADD + 0x0E) << 16;
+		data = 0 | dat_H;
+		WRITESDR(addr, data | (1 << 31));
 
-	dat_H = (FUSE_REGADD + 0x0E) << 16;
-	data = 0 | dat_H;
-	WRITESDR(addr, data | (1 << 31));
+		addr = addr + SDRC_REGOFFSET;
+	}
 }
 
 void WRITE_TO_SDR(UNSG32 addr, UNSG32 rpadr, UNSG32 rpdat)
 {
-	UNSG32	data,  dat_H;
-	//PRN_LOG("repair addr:%x, dat:%x\n", rpadr, rpdat);
+	UNSG32	data,  dat_H, dat_bit;
+	UNSG32  i = 0;
+
+	if (rpdat == 0)
+		return;
+	//PRN_LOG(fp_dumper, "repair addr:%x, dat:%x\n", rpadr, rpdat);
 	
-	addr = SDRC_REGADD + 0x64;
+	//addr = SDRC_REGADD + 0x64;
 
 	dat_H = (FUSE_REGADD + 0x01) << 16;
 	data = rpadr | dat_H;
 	WRITESDR(addr, data | (1 << 31));
+	printf("fuse addr:0x%x, dat:0x%x\n", rpadr, rpdat);
 
+#ifdef FT_TEST
 	dat_H = (FUSE_REGADD + 0x02) << 16;
-	data = rpdat | dat_H;
+	//rpdat = 0x36;
+	do {
+		dat_H = (FUSE_REGADD + 0x02) << 16;
+		dat_bit = rpdat & (1 << i);
+		data = dat_bit | dat_H | (0x7 << 8);
+		//data = dat_bit | dat_H | (0x5 << 8);
+		WRITESDR(addr, data | (1 << 31));
+		printf("fuse dat bit shift:0x%x\n", dat_bit);
+
+		dat_H = (FUSE_REGADD + 0x0E) << 16;
+		data = 0x7 | dat_H;
+		WRITESDR(addr, data | (1 << 31));
+
+		Sleep(10);
+
+		dat_H = (FUSE_REGADD + 0x0E) << 16;
+		data = 0x27 | dat_H;
+		WRITESDR(addr, data | (1 << 31));
+	}while((i++) < 7);
+#else
+	dat_H = (FUSE_REGADD + 0x02) << 16;
+	data = rpdat | dat_H | (0x7 << 8);
 	WRITESDR(addr, data | (1 << 31));
 
 	dat_H = (FUSE_REGADD + 0x0E) << 16;
@@ -593,6 +913,7 @@ void WRITE_TO_SDR(UNSG32 addr, UNSG32 rpadr, UNSG32 rpdat)
 	dat_H = (FUSE_REGADD + 0x0E) << 16;
 	data = 0x27 | dat_H;
 	WRITESDR(addr, data | (1 << 31));
+#endif
 }
 
 static UNSG32 colFuse[96][2] = {0};
@@ -619,47 +940,47 @@ void Do_Map(SDR_BISR_P bisr_info)
 	rowRepair(rowFuse, rowRed);
 
 
-	PRN_LOG(PRN_DBG, "colRed:  C0 C1 C2 C3\n");
+	PRN_LOG(fp_dumper, PRN_INFO, "colRed:  C0 C1 C2 C3\n");
 	for(i=0;i<24;i++){
-		PRN_LOG(PRN_DBG, "MAT%2d:   ",i);
+		PRN_LOG(fp_dumper, PRN_INFO, "MAT%2d:   ",i);
 		for(j=0;j<4;j++){
-			PRN_LOG(PRN_DBG, "%+2X ",colRed[i][j]);
+			PRN_LOG(fp_dumper, PRN_INFO, "%+2X ",colRed[i][j]);
 		}
-		PRN_LOG(PRN_DBG, "\n");
+		PRN_LOG(fp_dumper, PRN_INFO, "\n");
 	}
-	PRN_LOG(PRN_DBG, "\n");
+	PRN_LOG(fp_dumper, PRN_INFO, "\n");
 	k = 0;
-	PRN_LOG(PRN_DBG, "colFuse:\nADDR: DATA: \n");
+	PRN_LOG(fp_dumper, PRN_INFO, "colFuse:\nADDR: DATA: \n");
 	for(i=0;i<12;i++){
 		for(j=0;j<8;j++){
-			PRN_LOG(PRN_DBG, "%+2X ",colFuse[k][0]);
-			PRN_LOG(PRN_DBG, "%+2X | ",colFuse[k][1]);
+			PRN_LOG(fp_dumper, PRN_INFO, "%+2X ",colFuse[k][0]);
+			PRN_LOG(fp_dumper, PRN_INFO, "%+2X | ",colFuse[k][1]);
 			k++;
 		}
-		PRN_LOG(PRN_DBG, "\n");
+		PRN_LOG(fp_dumper, PRN_INFO, "\n");
 	}
-	PRN_LOG(PRN_DBG, "\n");
+	PRN_LOG(fp_dumper, PRN_INFO, "\n");
 
 	//print row results
 	k = 0;
-	PRN_LOG(PRN_DBG, "rowRed:\n");
+	PRN_LOG(fp_dumper, PRN_INFO, "rowRed:\n");
 	for(i=0;i<16;i++){
 		for(j=0;j<8;j++){
-			PRN_LOG(PRN_DBG, "%+4X ",rowRed[k]);
+			PRN_LOG(fp_dumper, PRN_INFO, "%+4X ",rowRed[k]);
 			k++;
 		}
-		PRN_LOG(PRN_DBG, "\n");
+		PRN_LOG(fp_dumper, PRN_INFO, "\n");
 	}
-	PRN_LOG(PRN_DBG, "\n");
+	PRN_LOG(fp_dumper, PRN_INFO, "\n");
 	k = 0;
-	PRN_LOG(PRN_DBG, "rowFuse:\nADDR: DATA: \n");
+	PRN_LOG(fp_dumper, PRN_INFO, "rowFuse:\nADDR: DATA: \n");
 	for(i=0;i<32;i++){
 		for(j=0;j<8;j++){
-			PRN_LOG(PRN_DBG, "%+3X ",rowFuse[k][0]);
-			PRN_LOG(PRN_DBG, "%+2X | ",rowFuse[k][1]);
+			PRN_LOG(fp_dumper, PRN_INFO, "%+3X ",rowFuse[k][0]);
+			PRN_LOG(fp_dumper, PRN_INFO, "%+2X | ",rowFuse[k][1]);
 			k++;
 		}
-		PRN_LOG(PRN_DBG, "\n");
+		PRN_LOG(fp_dumper, PRN_INFO, "\n");
 	}
 }
 
@@ -670,14 +991,13 @@ void Do_Repair(SDR_BISR_P bisr_info)
 
 	addr = SDRC_REGADD + ((bisr_info->SDRID - 1) / 2) * SDRC_REGOFFSET + 0x64;
 
-	PrepareSDR(addr);
+	//PrepareSDR(addr);
 
 	//to update
-	for ( i = 0; i < 96; i++)
+	for ( i = 0; i < 0x5F; i++)
 		WRITE_TO_SDR(addr, colFuse[i][0], colFuse[i][1]);
 
-	for ( i = 0; i < 128; i++)
+	for ( i = 0; i < 0xFF; i++)
 		WRITE_TO_SDR(addr, rowFuse[i][0], rowFuse[i][1]);
 
-	ExitSDR(addr);
 }
