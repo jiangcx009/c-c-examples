@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bisr.c" />
+    <ClCompile Include="diag_dbg.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="repair.c" />
   </ItemGroup>
@@ -20,7 +21,7 @@
     <ClInclude Include="cinclude.h" />
     <ClInclude Include="cmacros.h" />
     <ClInclude Include="ctypes.h" />
-    <ClInclude Include="gcsoc.h" />
+    <ClInclude Include="diag_dbg.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DDE39CBD-02E1-49FB-ADAB-0297B5FF1C0D}</ProjectGuid>
@@ -34,7 +35,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
@@ -61,12 +62,13 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__USBJTAG__;__FPGA__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>gcsoc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libusb.lib;libfpga.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -24,6 +24,9 @@
     <ClCompile Include="repair.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="diag_dbg.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bisr.h">
@@ -38,7 +41,7 @@
     <ClInclude Include="ctypes.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="gcsoc.h">
+    <ClInclude Include="diag_dbg.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
