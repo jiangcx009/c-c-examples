@@ -51,8 +51,8 @@
 #define WRITESDR(a, b)  single_write32((a), (b)) 
 #define READSDR(a)  single_read32((a))
 #else
-#define WRITESDR(a, b)  a/*printf("write sdr addr:%x, dat:%x\n", a, b);*/
-#define READSDR(a)  a/*printf("read sdr addr:%x\n", a);*/
+#define WRITESDR(a, b)  1/*printf("write sdr addr:%x, dat:%x\n", a, b);*/
+#define READSDR(a)  1/*printf("read sdr addr:%x\n", a);*/
 #endif
 
 
@@ -123,6 +123,12 @@ enum ERR_TYPE {
 	REPAIR_ERR
 };
 
+enum REPAIR_TYPE {
+	BLREPAIR = 1,
+	WLREPAIR,
+	CROSSREPAIR
+};
+
 //The information of normal resource which redundancy has repaired
 typedef struct RED_REP_INFO
 {
@@ -134,12 +140,17 @@ typedef struct RED_REP_INFO
 typedef struct ERR_RESOURCE_INFO
 {
 	UNSG8		bl_repair_flag; //BL err is more than threshold
-	UNSG8		used;  //whether for WL or BL Redundancy is used or not
-	UNSG8		last_used; 
-	//UNSG8		type;  //WL,BL,Normal error
+	//for WL or BL Redundancy
+	UNSG8		used;  //whether WL or BL Redundancy is used or not in the current repair process
+	UNSG8		last_used; //whether WL or BL Redundancy is used before or not 
+
 	UNSG8		err;   //the resource is error or not when type is WL and BL
 	UNSG8		sMAT;   //Err belong to which small MAT in big MAT 0~2
 	UNSG8		bMAT;	//Err belong to which big MAT 0~7
+
+	//for normal resource
+	UNSG32		hasCross; //low 8bit indicate whether cross or not, high 24bits indicate the WL Red
+
 	UNSG32		rowAdr; //WL address
 	UNSG32		colAdr; //BL address
 	RED_REP_INFO_t		redundancy_resource; //
@@ -151,6 +162,7 @@ typedef struct SDR_BISR
 {
 	UNSG8			type;   //WL,BL,Normal error
 	UNSG8			bl_num_flag; //BL err is more than threshold
+	UNSG8			ReRapir;
 	UNSG32			SDRID;  //which SDRAM id
 	UNSG32			normal_err_count;
 
@@ -165,8 +177,8 @@ typedef struct SDR_BISR
 	ERR_RESOURCE_INFO_p		p_crossResource;
 }SDR_BISR_t, *SDR_BISR_P;
 
-UNSG32 SDR_BISR_Entry(UNSG8 *argv[]);
-UNSG32 SDR_BISR_DBG(UNSG8 *argv[]);
+UNSG32 SDR_BISR_Entry(UNSG8 *argv[], int ReRepair);
+UNSG32 SDR_BISR_DBG(UNSG8 *argv[], int ReRepair);
 SDR_BISR_t*	sdr_open(SDR_BISR_t* sdr_bisr, UNSG8 *argv[]);
 SDR_BISR_P	sdr_release(SDR_BISR_P	sdr_info);
 UNSG32 SDR_PrePrepair(SDR_BISR_P bisr_info);
@@ -177,6 +189,8 @@ void Write_CHIPID(UNSG32 addr, UNSG32 data);
 UNSG32 BL_Repair_check(UNSG32 addr, UNSG32 sdr_id, UNSG32 rp_coladdr);
 UNSG32 WL_Repair_check(UNSG32 addr, UNSG32 sdr_id, UNSG32 rp_rowaddr);
 UNSG32 SDR_BISR_Check(SDR_BISR_P bisr_info);
+UNSG32 BLRed_used_chk(SDR_BISR_t *bisr_info, UNSG32 rowaddr);
+UNSG32 WLRed_used_chk(SDR_BISR_t *bisr_info, UNSG32 rowaddr);
 
 void Init_SDR();
 

@@ -180,7 +180,7 @@ UNSG32 fill_WL_redundancy_err(ERR_RESOURCE_INFO_t *wlR, UNSG32 rowaddr, UNSG32 c
 /****************************************************************
  * Description:
  *				If the BitLine Redundancy is err, fill the 
- *				buffer and a bit line of a small Mat use a buffer
+ *				buffer and a bitline of a small Mat use a buffer
  ****************************************************************/
 UNSG32 fill_BL_redundancy_err(ERR_RESOURCE_INFO_t *blR, UNSG32 rowaddr, UNSG32 coladdr)
 {
@@ -337,51 +337,121 @@ UNSG32 fill_bisr_info(UNSG32 buffer, SDR_BISR_t *bisr_info)
 	return CTX_PROC_STAT;
 }
 
+/*********************************************************************
+ * @Description:
+ *		Step1: Jump to BL Redundancy access mode
+ *		Step2: Write values to the first WL of four BL Redundancy
+ *		Step3: Jump to normal access mode
+ *		Step4: Traverse the first WL of the sMat
+ *		Step5: Jump to Step1
+ *********************************************************************/
 UNSG32 BLRed_used_chk(SDR_BISR_t *bisr_info, UNSG32 rowaddr)
 {
-	ERR_RESOURCE_INFO_p		wlR = bisr_info->wordLineResource;
-	UNSG32					wlR_num;
-	UNSG32					wlR_reg, wlR_dat;
-	UNSG32					addrC, data, addrD;
-
+	ERR_RESOURCE_INFO_p		blR = bisr_info->bitLineResource;
+	ERR_RESOURCE_INFO_p		nlR = bisr_info->normalResource;
+	UNSG32					addrC, data, addrD, addr;
+	UNSG32					i, j;
+	UNSG32					blR_addr;
+	
 	addrC = SDRC_REGADD + ((bisr_info->SDRID - 1) / 2) * SDRC_REGOFFSET + 0x64;
-	wlR_num = rowaddr; //0~127
-	wlR_reg = 0x10F + wlR_num/8*0x10;
-	wlR_dat = 0x700 | (1 << wlR_num);
 
-	PRN_LOG(fp_dumper, PRN_DBG, "Word Line Redundancy num:%d, reg:%x, dat:%x\n", wlR_num ,wlR_reg, wlR_dat);
+	for (j = 0; j < 24; j++) 
+	{
+#if 0
+		addrD = 0x15;
+		data = 0x718;
+		WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+#else
+		addrD = 0x15;
+		data = 0x670;
+		WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
 
-	//test mode entry
-	addrD = (FUSE_REGADD + 0xe) << 16;
-	data = addrD | 0x30;
-	WRITESDR(addrC, data | (1 << 31));
+		addrD = 0x10;
+		data = 0x7;
+		WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+#endif
+		
+		for (i = 0; i < 4; i++)
+		{
+			addr = (((j * 0x2B0) << 7) | i) + 0x200000 * ((bisr_info->SDRID - 1)/2);
+			WRITESDR(addr<<4, 0x76543210+i);
+		}
 
-	//access the BL hit readout address
-	addrD = (FUSE_REGADD + 0x1) << 16;
-	data = addrD | wlR_reg;
-	WRITESDR(addrC, data | (1 << 31));
+		addrD = (FUSE_REGADD + 0x5);
+		data = 0x658;
+		WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
 
-	//
-	addrD = (FUSE_REGADD + 0x2) << 16;
-	data = addrD | wlR_dat;
-	WRITESDR(addrC, data | (1 << 31));
+		for (i = 0; i < 128; i++)
+		{
+			addr = (((j * 0x2B0) << 7) | i) + 0x200000 * ((bisr_info->SDRID - 1)/2);
+			data = READSDR(addr<<4);
 
-	addrD = (FUSE_REGADD + 0xe) << 16;
-	data = addrD;
-	WRITESDR(addrC, data | (0 << 31));
+			if ( 0x7654321 == (data >> 4))
+			{
+				blR_addr = j + (data & 0xF) * 24;
+				blR[blR_addr].last_used = 1;
+				blR[blR_addr].redundancy_resource.coladdr = i;
+				blR[blR_addr].redundancy_resource.rowaddr = (j * 0x2B0) << 7;
 
-	data = READSDR(addrC+8);
-	wlR[rowaddr].last_used = !((data & (1 << 12)) >> 12);
-	//printf("data:%x, used:%d\n", data, wlR[rowaddr].last_used);
-
-	//exit test mode
-	addrD = (FUSE_REGADD + 0xe) << 16;
-	data = addrD | 0x0;
-	WRITESDR(addrC, data | (1 << 31));	
-
-	return wlR[rowaddr].used;
+				PRN_LOG(fp_dumper, PRN_INFO, "BLR(sMat:%d,  %d th) repair nlr:%x (row:%x, col:%x)\n", j, data & 0xF, \
+					addr, j * 0x2B0, i);
+			}
+		}
+	}
 }
 
+/*********************************************************************
+ * @Description:
+ *		Step1: Jump to WL Redundancy access mode
+ *		Step2: Write values to the first BL of four WL Redundancy
+ *		Step3: Jump to normal access mode
+ *		Step4: Traverse the first WL of the sMat
+ *		Step5: Jump to Step1
+ *********************************************************************/
+UNSG32 WLRed_used_chk(SDR_BISR_t *bisr_info, UNSG32 rowaddr)
+{
+	ERR_RESOURCE_INFO_p		wlR = bisr_info->wordLineResource;
+	ERR_RESOURCE_INFO_p		nlR = bisr_info->normalResource;
+	UNSG32					addrC, data, addrD, addr;
+	UNSG32					i, j;
+	UNSG32					wlR_addr;
+	
+	addrC = SDRC_REGADD + ((bisr_info->SDRID - 1) / 2) * SDRC_REGOFFSET + 0x64;
+	addrD = (FUSE_REGADD + 0x5);
+	data = 0x698;
+	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+
+	for (j = 0; j < 8; j++)  //
+	{
+		for (i = 0; i < 16; i++) //WL in bMat
+		{
+			addr = ((i | (j << 11)) << 7) + 0x200000 * ((bisr_info->SDRID - 1)/2);
+			WRITESDR(addr<<4, 0x12345600 + i + j*16);
+		}
+	}
+
+	addrD = (FUSE_REGADD + 0x5);
+	data = 0x658;
+	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+
+	for (i = 0; i < 0x3FFF; i++)
+	{
+		addr = (i << 7) + 0x200000 * ((bisr_info->SDRID - 1)/2);
+		data = READSDR(addr<<4);
+
+		if ( 0x123456 == (data >> 8))
+		{
+			wlR_addr = (data & 0xFF);
+			wlR[wlR_addr].last_used = 1;
+			wlR[wlR_addr].redundancy_resource.coladdr = 0;
+			wlR[wlR_addr].redundancy_resource.rowaddr = i;
+			PRN_LOG(fp_dumper, PRN_INFO, "WLR(bMat:%d,  %d th) repair nlr:%x (row:%x, col:%x)\n", wlR_addr/16, wlR_addr%16,\
+				addr, i, 0);
+		}
+	}
+}
+
+/*
 UNSG32 WLRed_used_chk(SDR_BISR_t *bisr_info, UNSG32 rowaddr)
 {
 	ERR_RESOURCE_INFO_p		wlR = bisr_info->wordLineResource;
@@ -426,6 +496,7 @@ UNSG32 WLRed_used_chk(SDR_BISR_t *bisr_info, UNSG32 rowaddr)
 
 	return wlR[rowaddr].used;
 }
+*/
 
 /*********************************************************************
  * @Description:
@@ -441,15 +512,28 @@ UNSG32 BL_Repair_check(UNSG32 addr, UNSG32 sdr_id, UNSG32 rp_coladdr)
 	UNSG32 addrD, data, addrC;
 	UNSG32 addrAct;
 
+	return 1;
+
 	addrAct = addr + 0x200000 * ((sdr_id - 1)/2);
 	WRITESDR(addrAct<<4, wdata);
 
 	//Active BL Redundancy access
 	addrC = SDRC_REGADD + ((sdr_id - 1) / 2) * SDRC_REGOFFSET + 0x64;
 	PRN_LOG(fp_dumper, PRN_DBG, "\t SDRAM Controller addr:%x\n", addrC);
+
+#if 0
 	addrD = 0x15;
 	data = 0x718;
 	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+#else
+	addrD = 0x15;
+	data = 0x670;
+	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+
+	addrD = 0x10;
+	data = 0x7;
+	WRITESDR(addrC, data | (addrD << 16) | (1 << 31));
+#endif
 
 	WRITESDR(addrC, data | (addrD << 16) | (0 << 31));
 	rdata = READSDR(addrC + 0x8);
@@ -483,6 +567,8 @@ UNSG32 WL_Repair_check(UNSG32 addr, UNSG32 sdr_id, UNSG32 rp_rowaddr)
 	UNSG32 rowH, rowL;
 
 	UNSG32 addrAct;
+
+	return 1;
 	
 	addrAct = addr + 0x200000 * ((sdr_id - 1)/2);
 	WRITESDR(addrAct<<4, wdata);
@@ -603,6 +689,12 @@ UNSG32 BitLine_Repair(SDR_BISR_t *bisr_info)
 			index = index + 24;
 			stat = BL_ERR_STAT;
 		}
+		else if ( blR[index].last_used)
+		{
+			PRN_LOG(fp_dumper, PRN_INFO, "======  This BL Redundancy @%d of sMat @%d is last used!\n", i, sMat_addr);
+			stat = BL_ERR_STAT;
+			index = index + 24;
+		}
 		else if ( blR[index].used)
 		{
 			//Whether the unit of BL is Repaired by previous unit in the same BL and sMat
@@ -610,6 +702,8 @@ UNSG32 BitLine_Repair(SDR_BISR_t *bisr_info)
 			rowaddr_sdr = blR[index].redundancy_resource.rowaddr;
 			smataddr_sdr = blR[index].redundancy_resource.sMataddr;
 			blR_used = 1;
+
+			blR[index].hasCross |= BLREPAIR;
 
 			if ( coladdr_sdr == nlR->colAdr && smataddr_sdr == nlR->sMAT)
 			{
@@ -642,12 +736,14 @@ UNSG32 BitLine_Repair(SDR_BISR_t *bisr_info)
 			blR[index].redundancy_resource.rowaddr = nlR->rowAdr;
 			blR[index].redundancy_resource.sMataddr = nlR->sMAT;
 			blR[index].used = 1;
+			blR[index].hasCross |= BLREPAIR;
 			//sMAT_stat[index] = 1;
 			stat = BL_FINISH_STAT;
 
 			break;
 		}
 	}
+
 
 	return stat;	
 }
@@ -657,7 +753,7 @@ UNSG32 WordLine_Repair(SDR_BISR_t *bisr_info)
 	UNSG32	i, j;
 	ERR_RESOURCE_INFO_p		nlR = bisr_info->p_normalResource;
 	ERR_RESOURCE_INFO_p		wlR = bisr_info->wordLineResource;
-	ERR_RESOURCE_INFO_p     clR = bisr_info->p_crossResource;
+	ERR_RESOURCE_INFO_p		blR = bisr_info->bitLineResource;
 	UNSG32	sMat_addr;
 	UNSG32  bMat_addr;
 	UNSG32  index, index_wl_redundancy;
@@ -665,6 +761,7 @@ UNSG32 WordLine_Repair(SDR_BISR_t *bisr_info)
 	UNSG32  coladdr_sdr, rowaddr_sdr;
 
 	bMat_addr = nlR->bMAT;
+	sMat_addr = nlR->sMAT;
 	index     = bMat_addr + 1; 
 	index     = (index == 8) ? 0 : index;
 
@@ -711,6 +808,22 @@ UNSG32 WordLine_Repair(SDR_BISR_t *bisr_info)
 				coladdr_sdr = wlR[index_wl_redundancy].redundancy_resource.coladdr;
 				rowaddr_sdr = wlR[index_wl_redundancy].redundancy_resource.rowaddr;
 
+				if ( blR[sMat_addr].hasCross && (blR[sMat_addr].used || blR[sMat_addr + 24].used \
+					|| blR[sMat_addr + 48].used || blR[sMat_addr + 72].used)) 
+				{
+					blR[sMat_addr].hasCross |= WLREPAIR;
+					blR[sMat_addr].hasCross |= (rowaddr_sdr & 0xFFFF) << 8;
+
+					blR[sMat_addr+24].hasCross |= WLREPAIR;
+					blR[sMat_addr+24].hasCross |= (rowaddr_sdr & 0xFFFF) << 8;
+
+					blR[sMat_addr+48].hasCross |= WLREPAIR;
+					blR[sMat_addr+48].hasCross |= (rowaddr_sdr & 0xFFFF) << 8;
+
+					blR[sMat_addr+72].hasCross |= WLREPAIR;
+					blR[sMat_addr+72].hasCross |= (rowaddr_sdr & 0xFFFF) << 8;
+				}
+
 				if ( rowaddr_sdr == nlR->rowAdr)
 				{
 					stat = WL_FINISH_STAT; 
@@ -741,6 +854,22 @@ UNSG32 WordLine_Repair(SDR_BISR_t *bisr_info)
 				wlR[index_wl_redundancy].redundancy_resource.rowaddr = nlR->rowAdr;
 				wlR[index_wl_redundancy].redundancy_resource.sMataddr = nlR->bMAT;
 				wlR[index_wl_redundancy].used = 1;
+
+				if ( blR[sMat_addr].hasCross && (blR[sMat_addr].used || blR[sMat_addr + 24].used \
+					|| blR[sMat_addr + 48].used || blR[sMat_addr + 72].used)) 
+				{
+					blR[sMat_addr].hasCross |= WLREPAIR;
+					blR[sMat_addr].hasCross |= (nlR->rowAdr & 0xFFFF) << 8;
+
+					blR[sMat_addr+24].hasCross |= WLREPAIR;
+					blR[sMat_addr+24].hasCross |= (nlR->rowAdr & 0xFFFF) << 8;
+
+					blR[sMat_addr+48].hasCross |= WLREPAIR;
+					blR[sMat_addr+48].hasCross |= (nlR->rowAdr & 0xFFFF) << 8;
+
+					blR[sMat_addr+72].hasCross |= WLREPAIR;
+					blR[sMat_addr+72].hasCross |= (nlR->rowAdr & 0xFFFF) << 8;
+				}
 				//sMAT_stat[index] = 1;
 				stat = WL_FINISH_STAT;
 
@@ -750,11 +879,6 @@ UNSG32 WordLine_Repair(SDR_BISR_t *bisr_info)
 	}
 		
 	return stat;	
-}
-
-UNSG32 CrossLine_Repair(SDR_BISR_t *bisr_info)
-{
-
 }
 
 /*************************Description*********************************************

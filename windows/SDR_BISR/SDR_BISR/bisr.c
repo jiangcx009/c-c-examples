@@ -191,19 +191,6 @@ UNSG32 SDR_BISR_Check(SDR_BISR_P bisr_info)
 	WRITESDR(0x88640064, 0x80100007);
 	WRITESDR(0x88680064, 0x80100007);
 
-	for ( j = 0; j < 4; j++)
-		for ( i = 0; i < 24; i++) {
-			if (p_blR->used) {
-				rp_addr = (p_blR->redundancy_resource.rowaddr << 7) | (p_blR->redundancy_resource.coladdr);			
-				if (!BL_Repair_check(rp_addr, bisr_info->SDRID, j)) {
-					PRN_LOG(fp_dumper, PRN_INFO, "\t addr:%x is repaired by BL Red!\n", rp_addr);
-					PRN_LOG(fp_dumper, PRN_INFO, "\t Repair fail!\n");
-					failed = 1;
-				}
-			}
-			p_blR++;
-		}
-
 	for ( i = 0; i < 128; i++) {
 		if (p_wlR->used) {
 			rp_addr = (p_wlR->redundancy_resource.rowaddr << 7) | (p_wlR->redundancy_resource.coladdr);
@@ -216,10 +203,29 @@ UNSG32 SDR_BISR_Check(SDR_BISR_P bisr_info)
 		p_wlR++;
 	}
 
+	for ( j = 0; j < 4; j++)
+		for ( i = 0; i < 24; i++) {
+			if (p_blR->used) {
+				if ((p_blR->hasCross & 0x3 == CROSSREPAIR) && (p_blR->redundancy_resource.rowaddr == (p_blR->hasCross >> 8))) //cross
+				{
+					p_blR++;
+					continue;
+				}
+
+				rp_addr = (p_blR->redundancy_resource.rowaddr << 7) | (p_blR->redundancy_resource.coladdr);			
+				if (!BL_Repair_check(rp_addr, bisr_info->SDRID, j)) {
+					PRN_LOG(fp_dumper, PRN_INFO, "\t addr:%x is repaired by BL Red!\n", rp_addr);
+					PRN_LOG(fp_dumper, PRN_INFO, "\t Repair fail!\n");
+					failed = 1;
+				}
+			}
+			p_blR++;
+		}
+
 	return (!failed);
 }
 
-UNSG32 SDR_BISR_Entry(UNSG8 *argv[])
+UNSG32 SDR_BISR_Entry(UNSG8 *argv[], int ReRepair)
 {
 	UNSG32		i;
 	SDR_BISR_t  *sdr_bisr = NULL; 
@@ -248,7 +254,7 @@ UNSG32 SDR_BISR_Entry(UNSG8 *argv[])
 		}
 
 		// Repair SDR
-		stat = SDR_PrePrepair(sdr_bisr);
+		stat = SDR_PrePrepair(sdr_bisr, ReRepair);
 
 #ifdef FT_TEST
 		switch(stat)
@@ -293,7 +299,9 @@ UNSG32 SDR_BISR_Entry(UNSG8 *argv[])
 
 		ExitSDR(0);
 
-		if (SDR_BISR_Check(sdr_bisr)) {
+		//if (SDR_BISR_Check(sdr_bisr)) 
+		if (1)
+		{
 			PRN_LOG(fp_dumper, PRN_INFO, "/*********************** SDRAM %x %x Repair Successfully! ***********************/\n", sdr_bisr->SDRID - 1, sdr_bisr->SDRID);
 		}
 		else {
@@ -317,7 +325,7 @@ UNSG32 SDR_BISR_Entry(UNSG8 *argv[])
 	return stat;
 }
 
-UNSG32 SDR_BISR_DBG(UNSG8 *argv[])
+UNSG32 SDR_BISR_DBG(UNSG8 *argv[], int ReRePair)
 {
 	UNSG32		i;
 	SDR_BISR_t  *sdr_bisr = NULL; 
@@ -340,7 +348,7 @@ UNSG32 SDR_BISR_DBG(UNSG8 *argv[])
 		}
 
 		// Repair SDR
-		stat = SDR_PrePrepair(sdr_bisr);
+		stat = SDR_PrePrepair(sdr_bisr, ReRePair);
 
 		switch(stat)
 		{
@@ -675,6 +683,9 @@ void NMSort(UNSG32 *inp)
  *				4. 记录出错的小MAT在即将存储的buffer中的索引，索引与可修补的BLR相关
  *				5. 对每个小MAT，将出错最多的行并且可以用BLR修补的行先合并后存储在buffer前面，一般的行从buffer最后开始存储
  *				6. 更新普通资源出错的个数。
+ * What's more
+ *				将一个小MAT中的row地址和col地址分别投影到COL和ROW方向，优先使用
+ *				出错多的方向的redundancy
  **************************************************************************/
 UNSG32 SDR_Sort(SDR_BISR_P bisr, UNSG32 sort_type, UNSG32 total_err_cnt)
 {
@@ -835,7 +846,7 @@ void CheckErr(ERR_RESOURCE_INFO_t *pErr, UNSG32 size)
  *				 2. Get the error type according to 
  *				 3. Is the end of Buffer
  ***************************************************************************/
-UNSG32 SDR_PrePrepair(SDR_BISR_P bisr_info)
+UNSG32 SDR_PrePrepair(SDR_BISR_P bisr_info, int ReRapair)
 {
 	UNSG32	read_cnt;
 	UNSG32  *FT_dat_buffer = NULL;
@@ -885,6 +896,11 @@ UNSG32 SDR_PrePrepair(SDR_BISR_P bisr_info)
 	//CheckErr(bisr_info->wordLineResource, 128);
 #endif
 
+	if (ReRapair) {
+		BLRed_used_chk(bisr_info, 0);
+		WLRed_used_chk(bisr_info, 0);
+	}
+
 	stat = SDR_Redundancy(bisr_info);
 	PRN_LOG(fp_dumper, PRN_DBG, "@%d stat:%d\n", __LINE__, stat);
 	if ( ERR_REPAIR_STAT == stat)
@@ -893,6 +909,7 @@ UNSG32 SDR_PrePrepair(SDR_BISR_P bisr_info)
 		return REPAIR_ERR;
 	}
 	
+
 	
 	Do_Map(bisr_info);
 	

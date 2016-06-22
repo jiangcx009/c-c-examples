@@ -81,6 +81,40 @@ void main(UNSG32 argc, UNSG8* argv[])
 	Init_SDR();
 
 	diag_dbg();
+// 
+// 	READSDR(0x0);
+// 	WRITESDR(0x0, 0x12345);
+// 	if ( READSDR(0x0) != 0x12345)
+// 		printf("read addr:0x0, data:%x\n", READSDR(0x0));
+// 
+// 	READSDR(0x1000000);
+// 	WRITESDR(0x1000000, 0x12345);
+// 	if ( READSDR(0x1000000) != 0x12345)
+// 		printf("read addr:0x1000000, data:%x\n", READSDR(0x1000000));
+// 
+// 	READSDR(0x2000000);
+// 	WRITESDR(0x2000000, 0x12345);
+// 	if ( READSDR(0x2000000) != 0x12345)
+// 		printf("read addr:0x2000000, data:%x\n", READSDR(0x2000000));
+// 
+// 	READSDR(0x3000000);
+// 	WRITESDR(0x3000000, 0x12345);
+// 	if ( READSDR(0x3000000) != 0x12345)
+// 		printf("read addr:0x3000000, data:%x\n", READSDR(0x3000000));
+// 
+// 	READSDR(0x4000000);
+// 	WRITESDR(0x4000000, 0x12345);
+// 	if ( READSDR(0x4000000) != 0x12345)
+// 		printf("read addr:0x4000000, data:%x\n", READSDR(0x4000000));
+// 
+// 	READSDR(0x5000000);
+// 	WRITESDR(0x5000000, 0x12345);
+// 	if ( READSDR(0x5000000) != 0x12345)
+// 		printf("read addr:0x5000000, data:%x\n", READSDR(0x5000000));
+// 
+// 	diag_dbg();
+
+//	return;
 #endif
 
 #ifdef GEN_TEST
@@ -97,10 +131,10 @@ void main(UNSG32 argc, UNSG8* argv[])
  		SDR_BISR_Entry(&outfile[i]); 
 #else
 
-	stat = Merge(infile, 8, outfile);  //stat: PROC_ERR, SUCCESS
-	//stat = SDR_BISR_DBG(outfile);
+	//stat = Merge(infile, 8, outfile);  //stat: PROC_ERR, SUCCESS
+	//stat = SDR_BISR_DBG(outfile, 0);
 	//return;
-	stat = SDR_BISR_Entry(outfile);  //stat: SUCCESS, PROC_ERR, INFO_ERR, REPAIR_ERR
+	stat = SDR_BISR_Entry(outfile, 0);  //stat: SUCCESS, PROC_ERR, INFO_ERR, REPAIR_ERR
 	//Write_CHIPID(0x7, 0x2);
 	//SDR_BISR_Entry(argv);
 #endif
