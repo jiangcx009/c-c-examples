@@ -282,7 +282,7 @@ UNSG32 fill_bisr_info(UNSG32 buffer, SDR_BISR_t *bisr_info)
 
 	if (first_time) {
 		first_time = 0;
-		buffer = 0x8FF << 7;
+		buffer = 0x10d79f;
 	}
 #endif
 	
@@ -788,7 +788,7 @@ UNSG32 WordLine_Repair(SDR_BISR_t *bisr_info)
 
 		for ( j = 0; j < 16; j++)
 		{
-			index_wl_redundancy = index * 16 + j;
+			index_wl_redundancy = i * 16 + j;
 #ifdef ReRepair
 			//WLRed_used_chk(bisr_info, index_wl_redundancy);
 #endif

@@ -897,8 +897,8 @@ UNSG32 SDR_PrePrepair(SDR_BISR_P bisr_info, int ReRapair)
 #endif
 
 	if (ReRapair) {
-		BLRed_used_chk(bisr_info, 0);
-		WLRed_used_chk(bisr_info, 0);
+		//BLRed_used_chk(bisr_info, 0);
+		//WLRed_used_chk(bisr_info, 0);
 	}
 
 	stat = SDR_Redundancy(bisr_info);
